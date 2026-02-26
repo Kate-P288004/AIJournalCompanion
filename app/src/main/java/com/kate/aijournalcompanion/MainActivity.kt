@@ -31,11 +31,17 @@ fun JournalScreen() {
     var advice by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    //  Sorting UI state
+    // Sorting UI state
     var sortMethod by remember { mutableStateOf("Bubble") }
     var sortExpanded by remember { mutableStateOf(false) }
 
-    //  Store journal history in memory
+    // Search UI state
+    var searchMethod by remember { mutableStateOf("Binary Tree") }
+    var searchExpanded by remember { mutableStateOf(false) }
+    var searchEmotion by remember { mutableStateOf("") }
+    val searchResults = remember { mutableStateListOf<JournalEntry>() }
+
+    // Store journal history in memory
     val journalEntries = remember { mutableStateListOf<JournalEntry>() }
 
     val scope = rememberCoroutineScope()
@@ -52,6 +58,7 @@ fun JournalScreen() {
                 .verticalScroll(rememberScrollState())
         ) {
 
+            // ---- Input ----
             OutlinedTextField(
                 value = journalText,
                 onValueChange = { journalText = it },
@@ -61,6 +68,7 @@ fun JournalScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // ---- Analyze ----
             Button(
                 onClick = {
                     scope.launch {
@@ -77,7 +85,6 @@ fun JournalScreen() {
                             emotion = response.emotion
                             advice = response.advice
 
-                            // Add to history
                             journalEntries.add(
                                 JournalEntry(
                                     text = journalText,
@@ -101,9 +108,9 @@ fun JournalScreen() {
                 Text("Analyze")
             }
 
-            //  Sorting dropdown + button
             Spacer(modifier = Modifier.height(12.dp))
 
+            // ---- Sort dropdown ----
             ExposedDropdownMenuBox(
                 expanded = sortExpanded,
                 onExpandedChange = { sortExpanded = !sortExpanded }
@@ -156,36 +163,111 @@ fun JournalScreen() {
                 Text("Sort History by Emotion")
             }
 
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // ---- Search input ----
+            OutlinedTextField(
+                value = searchEmotion,
+                onValueChange = { searchEmotion = it },
+                label = { Text("Search emotion (e.g., JOY)") },
+                modifier = Modifier.fillMaxWidth()
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ---- Search dropdown ----
+            ExposedDropdownMenuBox(
+                expanded = searchExpanded,
+                onExpandedChange = { searchExpanded = !searchExpanded }
+            ) {
+                OutlinedTextField(
+                    value = searchMethod,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Search method") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = searchExpanded,
+                    onDismissRequest = { searchExpanded = false }
+                ) {
+                    listOf("Binary Tree", "HashMap", "Doubly Linked List").forEach { method ->
+                        DropdownMenuItem(
+                            text = { Text(method) },
+                            onClick = {
+                                searchMethod = method
+                                searchExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // ---- Search button ----
+            Button(
+                onClick = {
+                    val results = when (searchMethod) {
+                        "Binary Tree" -> SearchUtils.searchWithBinaryTree(journalEntries, searchEmotion)
+                        "HashMap" -> SearchUtils.searchWithHashMap(journalEntries, searchEmotion)
+                        else -> SearchUtils.searchWithDoublyLinkedList(journalEntries, searchEmotion)
+                    }
+
+                    searchResults.clear()
+                    searchResults.addAll(results)
+                },
+                enabled = journalEntries.isNotEmpty() && searchEmotion.isNotBlank(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Search")
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
+            // ---- Loading ----
             if (isLoading) {
                 CircularProgressIndicator()
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
+            // ---- Latest result ----
             if (emotion.isNotEmpty()) {
-                Text(
-                    text = "Emotion: $emotion",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
+                Text(text = "Emotion: $emotion", style = MaterialTheme.typography.headlineSmall)
                 Spacer(modifier = Modifier.height(8.dp))
-
-                Text(
-                    text = "Advice: $advice",
-                    style = MaterialTheme.typography.bodyLarge
-                )
+                Text(text = "Advice: $advice", style = MaterialTheme.typography.bodyLarge)
             }
 
-            //  History list (NOT reversed, so sorting shows)
+            // ---- Search Results ----
+            if (searchResults.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(24.dp))
+                Text(text = "Search Results", style = MaterialTheme.typography.headlineSmall)
+                Spacer(modifier = Modifier.height(8.dp))
+
+                searchResults.forEach { entry ->
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 6.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(text = entry.text)
+                            Spacer(modifier = Modifier.height(6.dp))
+                            Text(text = "Emotion: ${entry.emotion}")
+                            Text(text = "Advice: ${entry.advice}")
+                        }
+                    }
+                }
+            }
+
+            // ---- History ----
             if (journalEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
-
-                Text(
-                    text = "Journal History",
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
+                Text(text = "Journal History", style = MaterialTheme.typography.headlineSmall)
                 Spacer(modifier = Modifier.height(8.dp))
 
                 journalEntries.forEach { entry ->
