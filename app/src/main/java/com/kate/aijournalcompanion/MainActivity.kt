@@ -35,16 +35,21 @@ fun JournalScreen() {
     var sortMethod by remember { mutableStateOf("Bubble") }
     var sortExpanded by remember { mutableStateOf(false) }
 
+    var showChart by remember { mutableStateOf(false) }
+
     // Search UI state
     var searchMethod by remember { mutableStateOf("Binary Tree") }
     var searchExpanded by remember { mutableStateOf(false) }
     var searchEmotion by remember { mutableStateOf("") }
     val searchResults = remember { mutableStateListOf<JournalEntry>() }
 
+    var showHelp by remember { mutableStateOf(false) }
+
     // Store journal history in memory
     val journalEntries = remember { mutableStateListOf<JournalEntry>() }
 
     val scope = rememberCoroutineScope()
+
 
     Scaffold(
         topBar = { TopAppBar(title = { Text("AI Journal Companion") }) }
@@ -165,6 +170,15 @@ fun JournalScreen() {
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = { showChart = true },
+                enabled = journalEntries.isNotEmpty(),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Show Chart")
+            }
             // ---- Search input ----
             OutlinedTextField(
                 value = searchEmotion,
@@ -263,7 +277,43 @@ fun JournalScreen() {
                     }
                 }
             }
+            if (showChart) {
+                AlertDialog(
+                    onDismissRequest = { showChart = false },
+                    confirmButton = {
+                        TextButton(onClick = { showChart = false }) { Text("Close") }
+                    },
+                    title = { Text("Emotion Distribution") },
+                    text = { EmotionPieChart(entries = journalEntries) }
+                )
+            }
 
+                Spacer(modifier = Modifier.height(12.dp))
+
+                Button(
+                    onClick = { showHelp = true },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("Help")
+                }
+
+                if (showHelp) {
+                    HelpDialog(onClose = { showHelp = false })
+                }
+            }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        Button(
+            onClick = { showHelp = true },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Help")
+        }
+
+        if (showHelp) {
+            HelpDialog(onClose = { showHelp = false })
+        }
             // ---- History ----
             if (journalEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
@@ -284,7 +334,8 @@ fun JournalScreen() {
                         }
                     }
                 }
+
             }
         }
     }
-}
+
