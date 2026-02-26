@@ -22,7 +22,6 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun JournalScreen() {
@@ -32,7 +31,11 @@ fun JournalScreen() {
     var advice by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
-    // Store journal history in memory
+    //  Sorting UI state
+    var sortMethod by remember { mutableStateOf("Bubble") }
+    var sortExpanded by remember { mutableStateOf(false) }
+
+    //  Store journal history in memory
     val journalEntries = remember { mutableStateListOf<JournalEntry>() }
 
     val scope = rememberCoroutineScope()
@@ -85,7 +88,7 @@ fun JournalScreen() {
 
                             journalText = ""
 
-                        } catch (e: Exception) {
+                        } catch (_: Exception) {
                             emotion = "ERROR"
                             advice = "Could not connect to backend."
                         } finally {
@@ -96,6 +99,61 @@ fun JournalScreen() {
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Analyze")
+            }
+
+            //  Sorting dropdown + button
+            Spacer(modifier = Modifier.height(12.dp))
+
+            ExposedDropdownMenuBox(
+                expanded = sortExpanded,
+                onExpandedChange = { sortExpanded = !sortExpanded }
+            ) {
+                OutlinedTextField(
+                    value = sortMethod,
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Sort method") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortExpanded) },
+                    modifier = Modifier
+                        .menuAnchor()
+                        .fillMaxWidth()
+                )
+
+                ExposedDropdownMenu(
+                    expanded = sortExpanded,
+                    onDismissRequest = { sortExpanded = false }
+                ) {
+                    listOf("Bubble", "Insertion", "Selection").forEach { method ->
+                        DropdownMenuItem(
+                            text = { Text(method) },
+                            onClick = {
+                                sortMethod = method
+                                sortExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Button(
+                onClick = {
+                    val temp = journalEntries.toMutableList()
+
+                    when (sortMethod) {
+                        "Bubble" -> SortUtils.bubbleSort(temp)
+                        "Insertion" -> SortUtils.insertionSort(temp)
+                        "Selection" -> SortUtils.selectionSort(temp)
+                    }
+
+                    journalEntries.clear()
+                    journalEntries.addAll(temp)
+                },
+                enabled = journalEntries.size > 1,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Sort History by Emotion")
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -119,7 +177,7 @@ fun JournalScreen() {
                 )
             }
 
-            // History list
+            //  History list (NOT reversed, so sorting shows)
             if (journalEntries.isNotEmpty()) {
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -130,7 +188,7 @@ fun JournalScreen() {
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                journalEntries.asReversed().forEach { entry ->
+                journalEntries.forEach { entry ->
                     Card(
                         modifier = Modifier
                             .fillMaxWidth()
