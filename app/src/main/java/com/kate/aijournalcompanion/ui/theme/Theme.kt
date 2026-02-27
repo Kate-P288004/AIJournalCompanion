@@ -1,54 +1,63 @@
 package com.kate.aijournalcompanion.ui.theme
 
-import android.app.Activity
-import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.dynamicDarkColorScheme
-import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80
-)
+// ---------- Cold modern palette ----------
+private val ColdBg = Color(0xFFF2F5FA)
+private val ColdSurface = Color(0xFFE7EDF6)
 
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40
+private val ColdPrimary = Color(0xFF5A78FF)     // icy blue
+private val ColdSecondary = Color(0xFF7D96FF)   // lighter blue
+private val ColdTertiary = Color(0xFF6DD6FF)    // aqua accent
 
-    /* Other default colors to override
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
+private val TextOnLight = Color(0xFF1E2433)
+private val TextOnDark = Color(0xFFEAF0FF)
+
+private val ColdLightColorScheme = lightColorScheme(
+    primary = ColdPrimary,
+    secondary = ColdSecondary,
+    tertiary = ColdTertiary,
+
+    background = ColdBg,
+    surface = ColdSurface,
+
     onPrimary = Color.White,
     onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-    */
+    onTertiary = Color(0xFF06212B),
+
+    onBackground = TextOnLight,
+    onSurface = TextOnLight
+)
+
+private val ColdDarkColorScheme = darkColorScheme(
+    primary = Color(0xFF8AA0FF),
+    secondary = Color(0xFFA9B8FF),
+    tertiary = Color(0xFF7FE2FF),
+
+    background = Color(0xFF0E1320),
+    surface = Color(0xFF151C2C),
+
+    onPrimary = Color(0xFF0E1320),
+    onSecondary = Color(0xFF0E1320),
+    onTertiary = Color(0xFF0E1320),
+
+    onBackground = TextOnDark,
+    onSurface = TextOnDark
 )
 
 @Composable
 fun AIJournalCompanionTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Dynamic color is available on Android 12+
-    dynamicColor: Boolean = true,
+    // Turn OFF dynamic colors so your "cold modern" palette always applies
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = when {
-        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
-            val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
-    }
+    val colorScheme = if (darkTheme) ColdDarkColorScheme else ColdLightColorScheme
 
     MaterialTheme(
         colorScheme = colorScheme,

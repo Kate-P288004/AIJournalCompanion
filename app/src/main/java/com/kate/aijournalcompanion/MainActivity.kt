@@ -1,26 +1,46 @@
 package com.kate.aijournalcompanion
 
+import android.graphics.RenderEffect
+import android.graphics.Shader
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.BarChart
-import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asComposeRenderEffect
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
+import com.kate.aijournalcompanion.ui.theme.AIJournalCompanionTheme
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            MaterialTheme {
+            AIJournalCompanionTheme {
                 JournalScreen()
             }
         }
@@ -58,50 +78,43 @@ fun JournalScreen() {
 
     val scope = rememberCoroutineScope()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("AI Journal Companion")
-                        Text("Track, Reflect, Grow", style = MaterialTheme.typography.bodySmall)
-                    }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { showChart = true },
-                        enabled = journalEntries.isNotEmpty()
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.BarChart,
-                            contentDescription = "Show Chart"
-                        )
-                    }
-                    IconButton(onClick = { showHelp = true }) {
-                        Icon(
-                            imageVector = Icons.Default.HelpOutline,
-                            contentDescription = "Help"
-                        )
-                    }
-                }
+    // Background gradient (cold, clean)
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(
+                Brush.verticalGradient(
+                    colors = listOf(
+                        Color(0xFFDDF1FF), // icy blue
+                        Color(0xFFECE7FF), // soft purple
+                        Color(0xFFF4FAFF)  // cold white
+                    )
+                )
             )
-        }
-    ) { padding ->
+    ) {
+        Scaffold(
+            containerColor = Color.Transparent,
+            topBar = {
+                AnimatedGradientTopBar(
+                    title = "AI Journal Companion",
+                    subtitle = "Track, Reflect, Grow",
+                    onChart = { showChart = true },
+                    chartEnabled = journalEntries.isNotEmpty(),
+                    onHelp = { showHelp = true }
+                )
+            }
+        ) { padding ->
 
-        Column(
-            modifier = Modifier
-                .padding(padding)
-                .padding(16.dp)
-                .fillMaxSize()
-                .verticalScroll(rememberScrollState())
-        ) {
-
-            // ---------- Input Card ----------
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge
+            Column(
+                modifier = Modifier
+                    .padding(padding)
+                    .padding(horizontal = 14.dp, vertical = 10.dp)
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+
+                // ---------- Input Card ----------
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
 
                     Text("Write your journal entry", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(10.dp))
@@ -111,7 +124,14 @@ fun JournalScreen() {
                         onValueChange = { journalText = it },
                         placeholder = { Text("What happened today? How did you feel?") },
                         modifier = Modifier.fillMaxWidth(),
-                        minLines = 4
+                        minLines = 4,
+                        shape = RoundedCornerShape(18.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                            focusedContainerColor = Color.White.copy(alpha = 0.28f),
+                            unfocusedContainerColor = Color.White.copy(alpha = 0.20f)
+                        )
                     )
 
                     Spacer(modifier = Modifier.height(12.dp))
@@ -149,28 +169,28 @@ fun JournalScreen() {
                                 }
                             }
                         },
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(50),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                     ) {
                         Text("Analyze")
                     }
 
                     if (isLoading) {
                         Spacer(modifier = Modifier.height(12.dp))
-                        LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        LinearProgressIndicator(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.primary,
+                            trackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f)
+                        )
                     }
                 }
-            }
 
-            // ---------- Latest Result ----------
-            if (emotion.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(14.dp))
+                // ---------- Latest Result ----------
+                if (emotion.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(14.dp))
 
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = MaterialTheme.shapes.extraLarge
-                ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-
+                    GlassCard(modifier = Modifier.fillMaxWidth()) {
                         Text("Latest result", style = MaterialTheme.typography.titleMedium)
                         Spacer(modifier = Modifier.height(10.dp))
 
@@ -198,16 +218,11 @@ fun JournalScreen() {
                         )
                     }
                 }
-            }
 
-            // ---------- Tools Panel (Sort + Search) ----------
-            Spacer(modifier = Modifier.height(14.dp))
+                // ---------- Tools Panel ----------
+                Spacer(modifier = Modifier.height(14.dp))
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = MaterialTheme.shapes.extraLarge
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                GlassCard(modifier = Modifier.fillMaxWidth()) {
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -223,7 +238,7 @@ fun JournalScreen() {
                     if (toolsExpanded) {
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // ---- Sort dropdown ----
+                        // Sort dropdown
                         ExposedDropdownMenuBox(
                             expanded = sortExpanded,
                             onExpandedChange = { sortExpanded = !sortExpanded }
@@ -238,7 +253,14 @@ fun JournalScreen() {
                                 },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                    focusedContainerColor = Color.White.copy(alpha = 0.28f),
+                                    unfocusedContainerColor = Color.White.copy(alpha = 0.20f)
+                                )
                             )
 
                             ExposedDropdownMenu(
@@ -262,35 +284,42 @@ fun JournalScreen() {
                         Button(
                             onClick = {
                                 val temp = journalEntries.toMutableList()
-
                                 when (sortMethod) {
                                     "Bubble" -> SortUtils.bubbleSort(temp)
                                     "Insertion" -> SortUtils.insertionSort(temp)
                                     "Selection" -> SortUtils.selectionSort(temp)
                                 }
-
                                 journalEntries.clear()
                                 journalEntries.addAll(temp)
                             },
                             enabled = journalEntries.size > 1,
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("Sort History by Emotion")
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // ---- Search input ----
+                        // Search input
                         OutlinedTextField(
                             value = searchEmotion,
                             onValueChange = { searchEmotion = it },
                             label = { Text("Search emotion (e.g., JOY)") },
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                focusedContainerColor = Color.White.copy(alpha = 0.28f),
+                                unfocusedContainerColor = Color.White.copy(alpha = 0.20f)
+                            )
                         )
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // ---- Search dropdown ----
+                        // Search dropdown
                         ExposedDropdownMenuBox(
                             expanded = searchExpanded,
                             onExpandedChange = { searchExpanded = !searchExpanded }
@@ -305,7 +334,14 @@ fun JournalScreen() {
                                 },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable)
-                                    .fillMaxWidth()
+                                    .fillMaxWidth(),
+                                shape = RoundedCornerShape(18.dp),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
+                                    focusedContainerColor = Color.White.copy(alpha = 0.28f),
+                                    unfocusedContainerColor = Color.White.copy(alpha = 0.20f)
+                                )
                             )
 
                             ExposedDropdownMenu(
@@ -333,58 +369,56 @@ fun JournalScreen() {
                                     "HashMap" -> SearchUtils.searchWithHashMap(journalEntries, searchEmotion)
                                     else -> SearchUtils.searchWithDoublyLinkedList(journalEntries, searchEmotion)
                                 }
-
                                 searchResults.clear()
                                 searchResults.addAll(results)
                             },
                             enabled = journalEntries.isNotEmpty() && searchEmotion.isNotBlank(),
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(50),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
                         ) {
                             Text("Search")
                         }
                     }
                 }
-            }
 
-            // ---------- Search Results ----------
-            if (searchResults.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(14.dp))
-                Text("Search Results", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
+                // ---------- Search Results ----------
+                if (searchResults.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(14.dp))
+                    Text("Search Results", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                searchResults.forEach { entry ->
-                    JournalEntryCard(entry = entry)
+                    searchResults.forEach { entry ->
+                        GlassJournalEntryCard(entry = entry)
+                    }
                 }
-            }
 
-            // ---------- History ----------
-            if (journalEntries.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Journal History", style = MaterialTheme.typography.titleMedium)
-                Spacer(modifier = Modifier.height(8.dp))
+                // ---------- History ----------
+                if (journalEntries.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text("Journal History", style = MaterialTheme.typography.titleMedium)
+                    Spacer(modifier = Modifier.height(8.dp))
 
-                journalEntries.asReversed().forEach { entry ->
-                    JournalEntryCard(entry = entry)
+                    journalEntries.asReversed().forEach { entry ->
+                        GlassJournalEntryCard(entry = entry)
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(22.dp))
+            }
         }
 
         // ---------- Chart Dialog ----------
         if (showChart) {
             AlertDialog(
                 onDismissRequest = { showChart = false },
-                confirmButton = {
-                    TextButton(onClick = { showChart = false }) { Text("Close") }
-                },
+                confirmButton = { TextButton(onClick = { showChart = false }) { Text("Close") } },
                 title = { Text("Emotion Distribution") },
                 text = {
                     val counts = emotionCounts(journalEntries)
                     val total = journalEntries.size.coerceAtLeast(1)
 
                     Column(modifier = Modifier.fillMaxWidth()) {
-
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -399,10 +433,7 @@ fun JournalScreen() {
 
                         counts.forEach { (emo, count) ->
                             val percent = (count * 100) / total
-                            Text(
-                                text = "$emo: $count ($percent%)",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
+                            Text("$emo: $count ($percent%)", style = MaterialTheme.typography.bodyMedium)
                         }
                     }
                 }
@@ -416,31 +447,149 @@ fun JournalScreen() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun JournalEntryCard(entry: JournalEntry) {
+fun AnimatedGradientTopBar(
+    title: String,
+    subtitle: String,
+    onChart: () -> Unit,
+    chartEnabled: Boolean,
+    onHelp: () -> Unit
+) {
+    val infinite = rememberInfiniteTransition(label = "topbar")
+    val t by infinite.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(6500, easing = LinearEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "shift"
+    )
+
+    val brush = Brush.linearGradient(
+        colors = listOf(
+            Color(0xFFB9C8FF),
+            Color(0xFF9DE3FF),
+            Color(0xFFD7B8FF),
+            Color(0xFFAAD7FF)
+        ),
+        start = Offset(0f + 900f * t, 0f),
+        end = Offset(900f * (1f - t), 520f)
+    )
+
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(90.dp)
+            .background(brush)
+    ) {
+        // Glass overlay with blur
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White.copy(alpha = 0.08f))
+                .then(
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        Modifier.graphicsLayer {
+                            renderEffect = RenderEffect
+                                .createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+                                .asComposeRenderEffect()
+                        }
+                    } else {
+                        Modifier
+                    }
+                )
+        )
+
+        TopAppBar(
+            colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent),
+            title = {
+                Column {
+                    Text(title, style = MaterialTheme.typography.titleLarge)
+                    Text(
+                        subtitle,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.65f)
+                    )
+                }
+            },
+            actions = {
+                IconButton(onClick = onChart, enabled = chartEnabled) {
+                    Icon(Icons.Default.BarChart, contentDescription = "Chart")
+                }
+                IconButton(onClick = onHelp) {
+                    Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = "Help")
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun GlassCard(
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(16.dp),
+    content: @Composable ColumnScope.() -> Unit
+) {
+    val shape = RoundedCornerShape(26.dp)
+
     Card(
+        modifier = modifier
+            .shadow(
+                elevation = 10.dp,
+                shape = shape,
+                ambientColor = Color(0x33000000),
+                spotColor = Color(0x22000000)
+            )
+            .clip(shape)
+            ,
+        shape = shape,
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White.copy(alpha = 0.28f)
+        ),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.55f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
+    ) {
+        Column(modifier = Modifier.padding(contentPadding), content = content)
+    }
+}
+
+private fun Modifier.glassBlur(): Modifier {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        this.graphicsLayer {
+            renderEffect = RenderEffect
+                .createBlurEffect(12f, 12f, Shader.TileMode.CLAMP)
+                .asComposeRenderEffect()
+        }
+    } else {
+        this
+    }
+}
+
+@Composable
+private fun GlassJournalEntryCard(entry: JournalEntry) {
+    GlassCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        shape = MaterialTheme.shapes.extraLarge
+        contentPadding = PaddingValues(14.dp)
     ) {
-        Column(modifier = Modifier.padding(14.dp)) {
-            AssistChip(
-                onClick = {},
-                label = { Text("${normalizeEmotion(entry.emotion)} ${emotionEmoji(entry.emotion)}") }
-            )
+        AssistChip(
+            onClick = {},
+            label = { Text("${normalizeEmotion(entry.emotion)} ${emotionEmoji(entry.emotion)}") }
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
-            Text(
-                entry.text,
-                style = MaterialTheme.typography.bodyMedium,
-                maxLines = 2
-            )
+        Text(
+            entry.text,
+            style = MaterialTheme.typography.bodyMedium,
+            maxLines = 2
+        )
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(entry.advice, style = MaterialTheme.typography.bodySmall)
-        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Text(entry.advice, style = MaterialTheme.typography.bodySmall)
     }
 }
 
