@@ -53,7 +53,6 @@ private val ColdDarkColorScheme = darkColorScheme(
 @Composable
 fun AIJournalCompanionTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    // Turn OFF dynamic colors so your "cold modern" palette always applies
     dynamicColor: Boolean = false,
     content: @Composable () -> Unit
 ) {

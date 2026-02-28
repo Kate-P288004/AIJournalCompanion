@@ -2,79 +2,251 @@
 <html>
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>AI Journal Companion Help</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background-color: #ffffff;
-            color: #333333;
-            line-height: 1.6;
+        :root {
+          --bg: #f6f9ff;
+          --card: rgba(255, 255, 255, 0.92);
+          --border: rgba(255, 255, 255, 0.65);
+          --text: #1f2937;
+          --muted: #4b5563;
+          --accent: #2563eb;
+          --accent2: #7c3aed;
+          --chip: rgba(37, 99, 235, 0.10);
+          --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
         }
 
-        h1 {
-            color: #6A1B9A;
+        * { box-sizing: border-box; }
+
+        body {
+          margin: 0;
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+          color: var(--text);
+          line-height: 1.55;
+          background:
+            radial-gradient(900px 420px at 20% 5%, rgba(157, 227, 255, 0.40), transparent 55%),
+            radial-gradient(800px 380px at 95% 10%, rgba(215, 184, 255, 0.45), transparent 55%),
+            radial-gradient(700px 360px at 30% 95%, rgba(185, 200, 255, 0.35), transparent 55%),
+            linear-gradient(180deg, #eef7ff 0%, #f4f0ff 45%, #ffffff 100%);
+          padding: 18px;
+        }
+
+        .wrap {
+          max-width: 820px;
+          margin: 0 auto;
+        }
+
+        header {
+          padding: 18px 18px 10px 18px;
+        }
+
+        .title {
+          margin: 0;
+          font-size: 24px;
+          letter-spacing: 0.2px;
+          background: linear-gradient(90deg, var(--accent), var(--accent2));
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          font-weight: 800;
+        }
+
+        .subtitle {
+          margin: 6px 0 0 0;
+          color: var(--muted);
+          font-size: 13px;
+        }
+
+        .card {
+          background: var(--card);
+          border: 1px solid var(--border);
+          border-radius: 18px;
+          box-shadow: var(--shadow);
+          padding: 16px;
+          margin: 12px 0;
         }
 
         h2 {
-            margin-top: 20px;
-            color: #4A148C;
+          margin: 0 0 10px 0;
+          font-size: 16px;
+          font-weight: 800;
+          color: #111827;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
 
-        ul {
-            margin-top: 10px;
+        p { margin: 0; color: var(--muted); }
+
+        .steps {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+          display: grid;
+          gap: 10px;
         }
 
-        li {
-            margin-bottom: 8px;
+        .step {
+          display: grid;
+          grid-template-columns: 32px 1fr;
+          gap: 10px;
+          align-items: start;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: rgba(255, 255, 255, 0.70);
+          border: 1px solid rgba(17, 24, 39, 0.06);
         }
 
-        .section {
-            margin-bottom: 20px;
+        .num {
+          width: 32px;
+          height: 32px;
+          border-radius: 10px;
+          display: grid;
+          place-items: center;
+          background: linear-gradient(135deg, rgba(37,99,235,0.18), rgba(124,58,237,0.14));
+          color: #1d4ed8;
+          font-weight: 800;
+          font-size: 13px;
         }
+
+        .step b { color: #111827; }
+
+        .chips {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-top: 10px;
+        }
+
+        .chip {
+          background: var(--chip);
+          color: #1d4ed8;
+          border: 1px solid rgba(37, 99, 235, 0.18);
+          border-radius: 999px;
+          padding: 6px 10px;
+          font-size: 12px;
+          font-weight: 700;
+          white-space: nowrap;
+        }
+
+        .note {
+          margin-top: 10px;
+          padding: 10px 12px;
+          border-radius: 14px;
+          background: rgba(124, 58, 237, 0.08);
+          border: 1px solid rgba(124, 58, 237, 0.16);
+          color: #3f2a6d;
+          font-size: 13px;
+        }
+
+        .footer {
+          margin-top: 10px;
+          font-size: 12px;
+          color: #6b7280;
+          padding: 0 2px;
+        }
+
+        a { color: #1d4ed8; text-decoration: none; }
     </style>
 </head>
+
 <body>
+<div class="wrap">
 
-<h1>AI Journal Companion</h1>
+    <header class="card">
+        <h1 class="title">AI Journal Companion</h1>
+        <p class="subtitle">Help guide for using the app, sorting, searching, and the emotion chart.</p>
+    </header>
 
-<div class="section">
-    <h2>About</h2>
-    <p>
-        AI Journal Companion allows you to write journal entries,
-        analyze emotional tone using AI, and organize your entries
-        using sorting and searching algorithms.
-    </p>
+    <section class="card">
+        <h2> What this app does</h2>
+        <p>
+            Write short journal entries, send them to the AI backend for emotion analysis, and store the results in your history.
+            You can then sort or search your history using different algorithms and view an emotion distribution chart.
+        </p>
+    </section>
+
+    <section class="card">
+        <h2> How to use it</h2>
+
+        <ul class="steps">
+            <li class="step">
+                <div class="num">1</div>
+                <div>
+                    <b>Write an entry</b><br>
+                    Type a journal entry in the text box.
+                </div>
+            </li>
+
+            <li class="step">
+                <div class="num">2</div>
+                <div>
+                    <b>Analyze</b><br>
+                    Tap <b>Analyze</b> to get an emotion label and short advice from the AI backend.
+                </div>
+            </li>
+
+            <li class="step">
+                <div class="num">3</div>
+                <div>
+                    <b>Sort history</b><br>
+                    Open <b>Tools</b>, choose a sorting method, then tap <b>Sort History by Emotion</b>.
+                </div>
+            </li>
+
+            <li class="step">
+                <div class="num">4</div>
+                <div>
+                    <b>Search history</b><br>
+                    Type an emotion (example: <b>JOY</b>) and choose a search structure, then tap <b>Search</b>.
+                </div>
+            </li>
+
+            <li class="step">
+                <div class="num">5</div>
+                <div>
+                    <b>View chart</b><br>
+                    Tap the chart icon to see the distribution of emotions and the percentage list.
+                </div>
+            </li>
+        </ul>
+
+        <div class="note">
+            Tip: emotion matching is not case-sensitive, so <b>joy</b>, <b>JOY</b>, and <b> Joy </b> all work the same.
+        </div>
+    </section>
+
+    <section class="card">
+        <h2> Algorithms in this project</h2>
+        <p>These algorithms are implemented in code and used inside the app:</p>
+
+        <div class="chips">
+            <span class="chip">Bubble Sort</span>
+            <span class="chip">Insertion Sort</span>
+            <span class="chip">Selection Sort</span>
+            <span class="chip">Binary Tree Search</span>
+            <span class="chip">HashMap Search</span>
+            <span class="chip">Doubly Linked List Search</span>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2> Assessment info</h2>
+        <p>
+            Developed for OOP3 Assessment Task (Android app with a FastAPI backend).
+            This app demonstrates UI design, API communication, data structures, and algorithm implementation.
+        </p>
+
+        <p class="footer">
+            Student: <b>Kate Odabas</b>
+        </p>
+    </section>
+
+    <div class="footer">
+        If the backend is not running, the app will show an error message and use a fallback response.
+    </div>
+
 </div>
-
-<div class="section">
-    <h2>How to Use</h2>
-    <ul>
-        <li>Write a journal entry and press <strong>Analyze</strong>.</li>
-        <li>Use <strong>Sort</strong> to organize entries by emotion.</li>
-        <li>Use <strong>Search</strong> to find entries by emotion using different algorithms.</li>
-        <li>Tap <strong>Show Chart</strong> to view emotion distribution.</li>
-    </ul>
-</div>
-
-<div class="section">
-    <h2>Algorithms Used</h2>
-    <ul>
-        <li>Bubble Sort</li>
-        <li>Insertion Sort</li>
-        <li>Selection Sort</li>
-        <li>Binary Tree Search</li>
-        <li>HashMap Search</li>
-        <li>Doubly Linked List Search</li>
-    </ul>
-</div>
-
-<div class="section">
-    <h2>Assessment</h2>
-    <p>
-        Developed for OOP3 Assessment – Android + FastAPI backend.
-    </p>
-</div>
-
 </body>
 </html>

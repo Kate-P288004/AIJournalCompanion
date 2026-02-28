@@ -10,6 +10,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 
+
+
+/**
+ * =========================================================
+ * Student: Kate Odabas
+ * Project: AI Journal Companion (AT2 – OOP3)
+ *
+ * Purpose:
+ * - Display in-app Help screen
+ * - Loads local help.html from assets (offline support)
+ *
+ * Assessment Concepts Demonstrated:
+ * - UI dialog component
+ * - Asset file loading
+ * - WebView integration inside Compose (AndroidView)
+ * =========================================================
+ */
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HelpDialog(onClose: () -> Unit) {
@@ -40,13 +58,13 @@ fun HelpDialog(onClose: () -> Unit) {
                         WebView(context).apply {
                             webViewClient = WebViewClient()
 
-                            // Static HTML, no JS needed
+                            // Static HTML
                             settings.javaScriptEnabled = false
                             settings.domStorageEnabled = true
                             settings.allowFileAccess = true
                             settings.allowContentAccess = true
 
-                            // Scrolling works and scrollbars show
+                            // Scrolling
                             isVerticalScrollBarEnabled = true
                             isHorizontalScrollBarEnabled = false
                             overScrollMode = WebView.OVER_SCROLL_ALWAYS

@@ -1,5 +1,27 @@
 package com.kate.aijournalcompanion
 
+/**
+ * =========================================================
+ * Student: Kate Odabas
+ * Project: AI Journal Companion (AT2 – OOP3)
+ *
+ * Purpose:
+ * - Main Compose UI screen for the journal app
+ * - Sends journal text to backend (FastAPI) for emotion + advice
+ * - Stores history in memory and allows:
+ *   - Sorting using selected algorithm (Bubble / Insertion / Selection)
+ *   - Searching using selected data structure (Binary Tree / HashMap / Doubly Linked List)
+ *   - Visualisation of emotion distribution (Pie chart + legend)
+ *
+ * Assessment Concepts Demonstrated:
+ * - Android Compose UI
+ * - Networking via Retrofit client
+ * - Algorithms: sorting + searching
+ * - Data structures: Binary Tree, HashMap, Doubly Linked List
+ * - Data using Canvas
+ * =========================================================
+ */
+
 import android.graphics.RenderEffect
 import android.graphics.Shader
 import android.os.Build
@@ -73,12 +95,12 @@ fun JournalScreen() {
     // Tools panel
     var toolsExpanded by remember { mutableStateOf(false) }
 
-    // Store journal history in memory
+    // Journal history stored in memory during app session
     val journalEntries = remember { mutableStateListOf<JournalEntry>() }
 
     val scope = rememberCoroutineScope()
 
-    // Background gradient (cold, clean)
+    // Background gradient
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -147,11 +169,14 @@ fun JournalScreen() {
 
                                 try {
                                     isLoading = true
+
+                                    // API call to backend
                                     val response = ApiClient.api.analyze(JournalRequest(journalText))
 
                                     emotion = response.emotion
                                     advice = response.advice
 
+                                    // Save entry in history
                                     journalEntries.add(
                                         JournalEntry(
                                             text = journalText,
@@ -248,9 +273,7 @@ fun JournalScreen() {
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Sort method") },
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortExpanded)
-                                },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = sortExpanded) },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth(),
@@ -284,11 +307,14 @@ fun JournalScreen() {
                         Button(
                             onClick = {
                                 val temp = journalEntries.toMutableList()
+
+                                // Assessment: apply selected sorting algorithm
                                 when (sortMethod) {
                                     "Bubble" -> SortUtils.bubbleSort(temp)
                                     "Insertion" -> SortUtils.insertionSort(temp)
                                     "Selection" -> SortUtils.selectionSort(temp)
                                 }
+
                                 journalEntries.clear()
                                 journalEntries.addAll(temp)
                             },
@@ -329,9 +355,7 @@ fun JournalScreen() {
                                 onValueChange = {},
                                 readOnly = true,
                                 label = { Text("Search method") },
-                                trailingIcon = {
-                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded)
-                                },
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = searchExpanded) },
                                 modifier = Modifier
                                     .menuAnchor(MenuAnchorType.PrimaryNotEditable)
                                     .fillMaxWidth(),
@@ -364,6 +388,7 @@ fun JournalScreen() {
 
                         Button(
                             onClick = {
+                                // Assessment: search using chosen data structure
                                 val results = when (searchMethod) {
                                     "Binary Tree" -> SearchUtils.searchWithBinaryTree(journalEntries, searchEmotion)
                                     "HashMap" -> SearchUtils.searchWithHashMap(journalEntries, searchEmotion)
@@ -419,6 +444,7 @@ fun JournalScreen() {
                     val total = journalEntries.size.coerceAtLeast(1)
 
                     Column(modifier = Modifier.fillMaxWidth()) {
+
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -433,7 +459,22 @@ fun JournalScreen() {
 
                         counts.forEach { (emo, count) ->
                             val percent = (count * 100) / total
-                            Text("$emo: $count ($percent%)", style = MaterialTheme.typography.bodyMedium)
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "${emotionEmoji(emo)} $emo",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "$percent%",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
                     }
                 }
@@ -484,21 +525,20 @@ fun AnimatedGradientTopBar(
             .height(90.dp)
             .background(brush)
     ) {
-        // Glass overlay with blur
+
+        // Reduced overlay + reduced blur so content stays clear
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.White.copy(alpha = 0.08f))
+                .background(Color.White.copy(alpha = 0.04f))
                 .then(
                     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                         Modifier.graphicsLayer {
                             renderEffect = RenderEffect
-                                .createBlurEffect(20f, 20f, Shader.TileMode.CLAMP)
+                                .createBlurEffect(8f, 8f, Shader.TileMode.CLAMP)
                                 .asComposeRenderEffect()
                         }
-                    } else {
-                        Modifier
-                    }
+                    } else Modifier
                 )
         )
 
@@ -526,6 +566,10 @@ fun AnimatedGradientTopBar(
     }
 }
 
+/**
+ * Glass-style card container used across the UI.
+ * Uses border + soft elevation shadow to simulate glass panels.
+ */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -542,19 +586,22 @@ fun GlassCard(
                 ambientColor = Color(0x33000000),
                 spotColor = Color(0x22000000)
             )
-            .clip(shape)
-            ,
+            .clip(shape),
+
         shape = shape,
         colors = CardDefaults.cardColors(
-            containerColor = Color.White.copy(alpha = 0.28f)
+            containerColor = Color.White.copy(alpha = 0.42f)
         ),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.55f)),
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.40f)),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp)
     ) {
         Column(modifier = Modifier.padding(contentPadding), content = content)
     }
 }
 
+/**
+ * Blur effect for glass cards.
+ */
 private fun Modifier.glassBlur(): Modifier {
     return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
         this.graphicsLayer {
@@ -624,7 +671,11 @@ private fun emotionEmoji(rawEmotion: String): String {
     }
 }
 
-private fun emotionCounts(entries: List<JournalEntry>): Map<String, Int> {
+/**
+ * Count emotions for chart/legend display.
+ * Returns Map<Emotion, Count>
+ */
+fun emotionCounts(entries: List<JournalEntry>): Map<String, Int> {
     return entries
         .groupBy { normalizeEmotion(it.emotion) }
         .mapValues { it.value.size }
