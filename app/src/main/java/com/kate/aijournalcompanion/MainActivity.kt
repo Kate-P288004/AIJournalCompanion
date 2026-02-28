@@ -91,6 +91,7 @@ fun JournalScreen() {
     // Dialogs
     var showChart by remember { mutableStateOf(false) }
     var showHelp by remember { mutableStateOf(false) }
+    var nextId by remember { mutableStateOf(0) }
 
     // Tools panel
     var toolsExpanded by remember { mutableStateOf(false) }
@@ -170,22 +171,21 @@ fun JournalScreen() {
                                 try {
                                     isLoading = true
 
-                                    // API call to backend
                                     val response = ApiClient.api.analyze(JournalRequest(journalText))
 
                                     emotion = response.emotion
                                     advice = response.advice
 
-                                    // Save entry in history
                                     journalEntries.add(
                                         JournalEntry(
+                                            id = nextId,
                                             text = journalText,
                                             emotion = response.emotion,
                                             advice = response.advice
                                         )
                                     )
+                                    nextId++
 
-                                    journalText = ""
                                 } catch (_: Exception) {
                                     emotion = "ERROR"
                                     advice = "Could not connect to backend."
@@ -263,7 +263,6 @@ fun JournalScreen() {
                     if (toolsExpanded) {
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Sort dropdown
                         ExposedDropdownMenuBox(
                             expanded = sortExpanded,
                             onExpandedChange = { sortExpanded = !sortExpanded }
@@ -308,7 +307,6 @@ fun JournalScreen() {
                             onClick = {
                                 val temp = journalEntries.toMutableList()
 
-                                // Assessment: apply selected sorting algorithm
                                 when (sortMethod) {
                                     "Bubble" -> SortUtils.bubbleSort(temp)
                                     "Insertion" -> SortUtils.insertionSort(temp)
@@ -328,7 +326,6 @@ fun JournalScreen() {
 
                         Spacer(modifier = Modifier.height(16.dp))
 
-                        // Search input
                         OutlinedTextField(
                             value = searchEmotion,
                             onValueChange = { searchEmotion = it },
@@ -345,7 +342,6 @@ fun JournalScreen() {
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        // Search dropdown
                         ExposedDropdownMenuBox(
                             expanded = searchExpanded,
                             onExpandedChange = { searchExpanded = !searchExpanded }
@@ -388,7 +384,6 @@ fun JournalScreen() {
 
                         Button(
                             onClick = {
-                                // Assessment: search using chosen data structure
                                 val results = when (searchMethod) {
                                     "Binary Tree" -> SearchUtils.searchWithBinaryTree(journalEntries, searchEmotion)
                                     "HashMap" -> SearchUtils.searchWithHashMap(journalEntries, searchEmotion)
@@ -421,12 +416,21 @@ fun JournalScreen() {
                 // ---------- History ----------
                 if (journalEntries.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(16.dp))
-                    Text("Journal History", style = MaterialTheme.typography.titleMedium)
+                    Text("Journal History (Drag to delete)", style = MaterialTheme.typography.titleMedium)
                     Spacer(modifier = Modifier.height(8.dp))
 
-                    journalEntries.asReversed().forEach { entry ->
-                        GlassJournalEntryCard(entry = entry)
-                    }
+                    DragDropDeleteArea(
+                        entries = journalEntries.asReversed(),
+                        onDelete = { toDelete ->
+                            journalEntries.removeAll { it.id == toDelete.id }
+                            searchResults.removeAll { it.id == toDelete.id }
+
+                            if (journalEntries.isEmpty()) {
+                                emotion = ""
+                                advice = ""
+                            }
+                        }
+                    )
                 }
 
                 Spacer(modifier = Modifier.height(22.dp))
@@ -526,7 +530,6 @@ fun AnimatedGradientTopBar(
             .background(brush)
     ) {
 
-        // Reduced overlay + reduced blur so content stays clear
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -566,10 +569,6 @@ fun AnimatedGradientTopBar(
     }
 }
 
-/**
- * Glass-style card container used across the UI.
- * Uses border + soft elevation shadow to simulate glass panels.
- */
 @Composable
 fun GlassCard(
     modifier: Modifier = Modifier,
@@ -587,7 +586,6 @@ fun GlassCard(
                 spotColor = Color(0x22000000)
             )
             .clip(shape),
-
         shape = shape,
         colors = CardDefaults.cardColors(
             containerColor = Color.White.copy(alpha = 0.42f)
@@ -599,23 +597,8 @@ fun GlassCard(
     }
 }
 
-/**
- * Blur effect for glass cards.
- */
-private fun Modifier.glassBlur(): Modifier {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        this.graphicsLayer {
-            renderEffect = RenderEffect
-                .createBlurEffect(12f, 12f, Shader.TileMode.CLAMP)
-                .asComposeRenderEffect()
-        }
-    } else {
-        this
-    }
-}
-
 @Composable
-private fun GlassJournalEntryCard(entry: JournalEntry) {
+fun GlassJournalEntryCard(entry: JournalEntry) {
     GlassCard(
         modifier = Modifier
             .fillMaxWidth()
@@ -671,10 +654,6 @@ private fun emotionEmoji(rawEmotion: String): String {
     }
 }
 
-/**
- * Count emotions for chart/legend display.
- * Returns Map<Emotion, Count>
- */
 fun emotionCounts(entries: List<JournalEntry>): Map<String, Int> {
     return entries
         .groupBy { normalizeEmotion(it.emotion) }
